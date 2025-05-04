@@ -168,7 +168,7 @@ class RabbitMQManager:
                             ch.basic_publish(
                             exchange='',
                             routing_key=properties.reply_to,
-                            body=json.dumps({ 'data': res }),
+                            body=json.dumps({ 'data': res }, default=str),
                             properties=pika.BasicProperties(
                                 correlation_id=properties.correlation_id,
                                 content_type='application/json',
