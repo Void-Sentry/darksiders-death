@@ -6,7 +6,7 @@ class FollowService:
         self.repo = follower_repository
         self.bus = bus_client
 
-    def following(self, user_id, page, size):
+    def following(self, user_id, page=1, size=10):
         following = self.repo.find_by({
             'follower_id': user_id,
         }, page, size)
@@ -44,6 +44,9 @@ class FollowService:
     def follow(self, user_id, follower_id):
         if not follower_id:
             return f"Follower ID is missing"
+        
+        if user_id == follower_id:
+            return "You cannot follow yourself"
 
         follower_info = self.bus.publish_event('war_queue', 'PROFILE_INFO', {
             'user_id': follower_id
@@ -65,7 +68,10 @@ class FollowService:
             'following_id': follower_id,
         })
 
-        self.bus.publish_event('war_queue', 'FOLLOW_COUNT', { 'operation': 'increment', 'user_id': user_id })
+        payload = { 'operation': 'increment', 'user_id': user_id }
+
+        self.bus.publish_event('war_queue', 'FOLLOW_COUNT', payload)
+        self.bus.publish_event('fury_queue', 'UPDATE_FEED', { **payload, 'following_id': follower_id })
 
         return "Now following"
 
@@ -83,6 +89,9 @@ class FollowService:
             'follower_id': user_id,
         })
 
-        self.bus.publish_event('war_queue', 'FOLLOW_COUNT', { 'operation': 'decrement', 'user_id': user_id })
+        payload = { 'operation': 'decrement', 'user_id': user_id }
+
+        self.bus.publish_event('war_queue', 'FOLLOW_COUNT', payload)
+        self.bus.publish_event('fury_queue', 'UPDATE_FEED', { **payload, 'following_id': follower_id })
 
         return "Unfollowed"
