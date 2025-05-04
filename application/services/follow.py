@@ -13,8 +13,6 @@ class FollowService:
 
         if not following:
             return []
-        
-        print([profile['following_id'] for profile in following])
 
         data = self.bus.publish_event('war_queue', 'SEARCH_PROFILE', {
             'user_ids': [str(profile['following_id']) for profile in following]
